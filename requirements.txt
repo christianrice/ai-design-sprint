@@ -1,2 +1,3 @@
 langchain==0.0.353
 redis==5.0.*
+pydantic==1.*
