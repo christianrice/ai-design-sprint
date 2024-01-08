@@ -1,6 +1,4 @@
 from datetime import datetime
-from dotenv import load_dotenv
-import os
 from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -11,6 +9,7 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.llms import Ollama
 from langchain.chat_models import ChatOpenAI
+from langchain.schema.output_parser import StrOutputParser
 
 
 REDIS_URL = "redis://localhost:6379/0"
@@ -71,20 +70,16 @@ def initialize_interviewer_chain(
     )
 
     if env == "prod":
-        # Load .env file
-        load_dotenv()
-
-        # Get OPENAI_API_KEY from .env file
-        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-        os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION")
-
         print("Initializing GPT 3.5...")
-        model = ChatOpenAI(model="gpt-3.5-turbo")
+        model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+        output_parser = StrOutputParser()
+
+        chain = prompt | model | output_parser
     else:
         print("Initializing Mistral...")
         model = Ollama(model="mistral")
 
-    chain = prompt | model
+        chain = prompt | model
 
     history = RedisChatMessageHistory(session_id=session_id, url=REDIS_URL, ttl=600)
 
@@ -144,6 +139,9 @@ def operate_conversation_chain(
         system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_EXPERT, env=env
     )
 
+    # Initialize the log as an empty list
+    answer_log = []
+
     next_question = invoke_chain_with_history(
         chain=CHAIN_INTERVIEWER,
         session_id=SESSION_INTERVIEWER,
@@ -162,6 +160,8 @@ def operate_conversation_chain(
             expert_description=expert_description,
             conversation_input=next_question,
         )
+
+        answer_log.append(next_answer)
 
         print(f"Answer: {next_answer}\n\n")
 
@@ -183,6 +183,9 @@ def operate_conversation_chain(
         conversation_input=next_question,
     )
 
-    print(f"Answer: {next_answer}\n")
+    answer_log.append(next_answer)
 
-    return next_answer
+    print(f"Answer: {next_answer}\n")
+    print("----------------------------------------\n\n")
+
+    return answer_log

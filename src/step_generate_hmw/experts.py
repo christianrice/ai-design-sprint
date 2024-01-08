@@ -3,6 +3,7 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import Ollama
+from langchain.chat_models import ChatOpenAI
 
 
 def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
@@ -49,7 +50,8 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
         },
     )
 
-    model = Ollama(model="mistral")
+    # model = Ollama(model="mistral")
+    model = ChatOpenAI(model="gpt-3.5-turbo-1106")
 
     chain = prompt | model | output_parser
 
