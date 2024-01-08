@@ -1,16 +1,22 @@
 import argparse
 
-from generate_experts.experts import get_experts
+from step_generate_hmw.experts import generate_experts
+from step_generate_hmw.interviews import operate_conversation_chain
 
 
 def initialize_sprint(sprint_goal, num_experts):
-    experts = get_experts(sprint_goal, num_experts)
+    experts = generate_experts(sprint_goal, num_experts)
 
     if not experts.experts:
         print("No experts found.")
     else:
         for expert in experts.experts:
             print(expert.name + ": " + expert.description)
+
+
+def run_interview():
+    question = operate_conversation_chain()
+    print(question)
 
 
 if __name__ == "__main__":
@@ -24,4 +30,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    initialize_sprint(args.sprint_goal, args.num_experts)
+    # initialize_sprint(args.sprint_goal, args.num_experts)
+    run_interview()

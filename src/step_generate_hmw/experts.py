@@ -5,7 +5,7 @@ from langchain.prompts import PromptTemplate
 from langchain_community.llms import Ollama
 
 
-def get_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
+def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
     class Expert(BaseModel):
         name: str = Field(description="Name of the expert")
         description: str = Field(
