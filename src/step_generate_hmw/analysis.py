@@ -12,7 +12,7 @@ from langchain.prompts.chat import (
 )
 
 
-def generate_hmw_question():
+def generate_hmw_question(answer: str):
     # Define the system message template with the answer as context
     system_template = """
     You are part of a Design Sprint working on the goal of:
@@ -67,7 +67,7 @@ def generate_hmw_question():
 
     response = chain.invoke(
         {
-            "answer": "What is the most effective marketing strategy?",
+            "answer": answer,
             "design_sprint_goal": "Create an AI tool that fully automates the Google one-week Design Sprint for a solo engineer",
         }
     )

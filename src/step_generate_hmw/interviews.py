@@ -70,13 +70,11 @@ def initialize_interviewer_chain(
     )
 
     if env == "prod":
-        print("Initializing GPT 3.5...")
         model = ChatOpenAI(model="gpt-3.5-turbo-1106")
         output_parser = StrOutputParser()
 
         chain = prompt | model | output_parser
     else:
-        print("Initializing Mistral...")
         model = Ollama(model="mistral")
 
         chain = prompt | model

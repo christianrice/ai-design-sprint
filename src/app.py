@@ -14,37 +14,56 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION")
 
 
-def initialize_sprint(sprint_goal, num_experts):
-    # Generate the experts
-    experts = generate_experts(sprint_goal, num_experts)
-
-    # For each expert, run the interview
-    if not experts.experts:
-        print("No experts found.")
-    else:
-        for expert in experts.experts:
-            print(expert.name + ": " + expert.description)
-
-
-def run_interview():
-    answers = operate_conversation_chain(
-        design_sprint_goal="Create an AI tool that fully automates the Google one-week Design Sprint for a solo engineer",
-        expert_description="Design Sprint Facilitator who has run hundreds of design sprints in-person with emerging technology teams",
-        num_cycles=2,
-        env="prod",
-    )
-
-    for answer in answers:
-        print(answer + "\n")
-
-    return
-
-
-def generate_hmw():
-    questions = generate_hmw_question()
+def generate_hmw(answer: str):
+    questions = generate_hmw_question(answer=answer)
 
     for question in questions:
         print(question)
+    return questions
+
+
+def run_interview(
+    design_sprint_goal: str, expert_description: str, num_cycles: int, env: str
+):
+    answers = operate_conversation_chain(
+        design_sprint_goal=design_sprint_goal,
+        expert_description=expert_description,
+        num_cycles=num_cycles,
+        env=env,
+    )
+
+    return answers
+
+
+def initialize_sprint(sprint_goal, num_experts):
+    print("Running a new design sprint\n")
+    print("Sprint goal: " + sprint_goal + "\n")
+
+    # Generate the experts
+    print("Generating experts...\n")
+    experts = generate_experts(sprint_goal, num_experts)
+    print("Experts generated. -----------------\n")
+
+    # For each expert, run the interview
+    print("Interviewing experts...\n")
+    if not experts:
+        print("No experts found.")
+        return
+    else:
+        for expert in experts:
+            print(f"Interviewing expert: {expert.name} - {expert.description}...\n")
+            answers = run_interview(
+                design_sprint_goal=sprint_goal,
+                expert_description=expert.description,
+                num_cycles=4,
+                env="prod",
+            )
+
+            print("Generating HMW questions...\n")
+            for answer in answers:
+                hmw_questions = generate_hmw(answer=answer)
+            print("HMW questions generated. -----------------\n")
+
     return
 
 
@@ -59,6 +78,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # initialize_sprint(args.sprint_goal, args.num_experts)
+    initialize_sprint(args.sprint_goal, args.num_experts)
     # run_interview()
-    generate_hmw()
+    # generate_hmw()

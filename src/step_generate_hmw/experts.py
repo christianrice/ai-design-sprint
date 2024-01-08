@@ -59,8 +59,11 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
         response = chain.invoke(
             {"sprint_goal": sprint_goal, "num_experts": num_experts}
         )
+
+        for expert in response.experts:
+            print(f"Expert: {expert.name}, Description: {expert.description}")
     except Exception as e:
         print(f"Error parsing output: {e}")
         response = Experts(experts=[])
 
-    return response
+    return response.experts
