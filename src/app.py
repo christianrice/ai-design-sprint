@@ -15,8 +15,14 @@ def initialize_sprint(sprint_goal, num_experts):
 
 
 def run_interview():
-    question = operate_conversation_chain()
-    print(question)
+    operate_conversation_chain(
+        design_sprint_goal="Create an AI tool that fully automates the Google one-week Design Sprint for a solo engineer",
+        expert_description="Design Sprint Facilitator who has run hundreds of design sprints in-person with emerging technology teams",
+        num_cycles=2,
+        env="prod",
+    )
+
+    return
 
 
 if __name__ == "__main__":
