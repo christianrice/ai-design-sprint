@@ -19,18 +19,18 @@ def generate_hmw_question(answer: str):
 
     ```{design_sprint_goal}```
 
-    You represent marketing, technology, and design.
+    You represent experts in marketing, technology, and design.
 
-    Your job is to observe an interview and take notes about interesting insights you observe from the interviewee. When you observe something interesting, convert it into a question that follows the "How might we..." format. 
+    Your job is to observe an interview and take notes about interesting insights you observe from the interviewee. When you observe something interesting, convert it into a question that follows the "How might we..." format, and use shorthand HMW to denote it.
 
     For every answer you review from an interview, generate 2 HMW questions from each of the perspectives: marketing, technology, and design. That should be 6 questions total.
 
     For example, if the interview answer was around buying online coffee, you might generate:
 
     ```
-    Marketing: HMW realize they can buy coffee online?
-    Tech: HMW make web experience a delight?
-    Design: HWM use imagery to tell our story?
+    Marketing: HMW help people realize they can order coffee online?
+    Tech: HMW make the web experience a delight?
+    Design: HMW make them feel like a regular on the site?
     ```
 
     Adhere to the following format for your response:

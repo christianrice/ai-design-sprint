@@ -39,7 +39,24 @@ def run_interview(
     return answers
 
 
-def initialize_sprint(sprint_goal, num_experts):
+def initialize_sprint():
+    sprint_goal = None
+    num_experts = None
+
+    if not sprint_goal:
+        while not sprint_goal:
+            sprint_goal = input("Enter the sprint goal: ")
+            if sprint_goal == "":
+                print("Sprint goal is required. Please enter a sprint goal.")
+
+    if not num_experts:
+        while not num_experts:
+            num_experts = input("Enter the number of experts: ")
+            if num_experts == "":
+                print("Number of experts is required. Please enter a number.")
+            else:
+                num_experts = int(num_experts)
+
     print("Running a new design sprint\n")
     print("Sprint goal: " + sprint_goal + "\n")
 
@@ -72,16 +89,4 @@ def initialize_sprint(sprint_goal, num_experts):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Accept arguments for goal, number of experts, and whether this is test or production."
-    )
-    parser.add_argument(
-        "--sprint_goal", type=str, help="Sprint goal", default="Default goal"
-    )
-    parser.add_argument("--num_experts", type=int, help="Number of experts", default=2)
-
-    args = parser.parse_args()
-
-    initialize_sprint(args.sprint_goal, args.num_experts)
-    # run_interview()
-    # generate_hmw()
+    initialize_sprint()
