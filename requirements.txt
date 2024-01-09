@@ -1,4 +1,6 @@
 langchain==0.0.353
+openai==1.7.*
 redis==5.0.*
 pydantic==1.*
 Flask==3.0.*
+python-dotenv==1.0.*
