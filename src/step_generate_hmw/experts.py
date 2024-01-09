@@ -52,6 +52,7 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     # model = Ollama(model="mistral")
     model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     chain = prompt | model | output_parser
 

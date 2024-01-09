@@ -67,6 +67,7 @@ def initialize_interviewer_chain(
 
     if env == "prod":
         model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+        # model = ChatOpenAI(model="gpt-4-1106-preview")
         output_parser = StrOutputParser()
 
         chain = prompt | model | output_parser
