@@ -9,9 +9,13 @@ from step_generate_hmw.analysis import generate_hmw_question
 # Load .env file
 load_dotenv()
 
-# Get OPENAI_API_KEY from .env file
+# Get keys from .env file
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION")
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT")
 
 
 def generate_hmw(answer: str):
