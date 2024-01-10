@@ -61,7 +61,10 @@ def generate_hmw_question(answer: str):
         [system_message_prompt, human_message_prompt]
     )
 
-    model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    model = ChatOpenAI(
+        model="gpt-3.5-turbo-1106",
+        model_kwargs={"response_format": {"type": "json_object"}},
+    )
     # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     chain = prompt | model | parser

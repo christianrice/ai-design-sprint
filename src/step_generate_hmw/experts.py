@@ -27,7 +27,7 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     Define {num_experts} different dream personas of experts who could help with this scenario.
 
-    For example, if the sprint problem were "Bring great coffee to new customers online" you would provide {num_experts} personas similar to:
+    For example, if the sprint problem were "Bring great coffee to new customers online" you would provide personas similar to:
 
     ```
     Steve
@@ -39,7 +39,7 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     {format_instructions}
 
-    Respond with NOTHING else but the valid JSON described above. Do not return a list. Do not return any preamble. Just return the JSON and nothing else at all.
+    Respond with NOTHING else but the valid JSON described above for the {num_experts} experts you have created.
     """
 
     prompt = PromptTemplate(
@@ -51,7 +51,10 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
     )
 
     # model = Ollama(model="mistral")
-    model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    model = ChatOpenAI(
+        model="gpt-3.5-turbo-1106",
+        model_kwargs={"response_format": {"type": "json_object"}},
+    )
     # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     chain = prompt | model | output_parser
