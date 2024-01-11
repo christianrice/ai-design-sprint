@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+from dataclasses import dataclass, asdict
+from typing import List, Union
 from logger import logger
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -12,6 +14,18 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.llms import Ollama
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.output_parser import StrOutputParser
+
+
+@dataclass
+class Message:
+    type: str
+    message: str
+
+
+@dataclass
+class Interview:
+    expert_id: str
+    conversation: List[Message]
 
 
 REDIS_URL = os.getenv("REDIS_URL")
@@ -138,7 +152,7 @@ def operate_conversation_chain(
     )
 
     # Initialize the logs as empty arrays
-    conversation_log = {"expert_id": expert_id, "conversation": []}
+    interview_log = Interview(expert_id=expert_id, conversation=[])
 
     next_question = invoke_chain_with_history(
         chain=CHAIN_INTERVIEWER,
@@ -147,9 +161,7 @@ def operate_conversation_chain(
         expert_description=expert_description,
         conversation_input="What would you like to ask me?",
     )
-    conversation_log["conversation"].append(
-        {"type": "question", "message": next_question}
-    )
+    interview_log.conversation.append(Message(type="question", message=next_question))
 
     logger.info(f"Question: {next_question}\n\n")
 
@@ -162,9 +174,7 @@ def operate_conversation_chain(
             conversation_input=next_question,
         )
 
-        conversation_log["conversation"].append(
-            {"type": "answer", "message": next_answer}
-        )
+        interview_log.conversation.append(Message(type="answer", message=next_answer))
 
         logger.info(f"Answer: {next_answer}\n\n")
 
@@ -176,8 +186,8 @@ def operate_conversation_chain(
             conversation_input=next_answer,
         )
 
-        conversation_log["conversation"].append(
-            {"type": "question", "message": next_question}
+        interview_log.conversation.append(
+            Message(type="question", message=next_question)
         )
 
         logger.info(f"Question: {next_question}\n\n")
@@ -190,9 +200,11 @@ def operate_conversation_chain(
         conversation_input=next_question,
     )
 
-    conversation_log["conversation"].append({"type": "answer", "message": next_answer})
+    interview_log.conversation.append(Message(type="answer", message=next_answer))
 
     logger.info(f"Answer: {next_answer}\n")
     logger.info("----------------------------------------\n\n")
 
-    return conversation_log
+    logger.info(interview_log)
+
+    return asdict(interview_log)

@@ -42,7 +42,7 @@ def conduct_interview_route():
         env=env,
     )
 
-    return conversation_log
+    return jsonify(conversation_log)
 
 
 @app.route("/generate_hmw_questions", methods=["POST"])

@@ -23,6 +23,10 @@ class Experts(BaseModel):
     experts: List[Expert] = Field(description="List of experts")
 
 
+class ExpertsWithID(BaseModel):
+    experts: List[ExpertWithID] = Field(default_factory=list)
+
+
 def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
     output_parser = PydanticOutputParser(pydantic_object=Experts)
 
@@ -67,7 +71,7 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     chain = prompt | model | output_parser
 
-    experts = []
+    experts_with_id = ExpertsWithID()
 
     try:
         response = chain.invoke(
@@ -79,7 +83,11 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
             logger.info(
                 f"Expert: {expert_with_id.name}, Description: {expert_with_id.description}, ID: {expert_with_id.id}"
             )
-            experts.append(expert_with_id)
+            print(
+                f"Expert: {expert_with_id.name}, Description: {expert_with_id.description}"
+            )
+            experts_with_id.experts.append(expert_with_id)
+            logger.info(f"Experts: {experts_with_id}")
     except Exception as e:
         logger.error(f"Error parsing output: {e}")
-    return experts
+    return experts_with_id.experts
