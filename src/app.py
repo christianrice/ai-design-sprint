@@ -30,12 +30,14 @@ def conduct_interview_route():
     data = request.get_json()
     design_sprint_goal = data.get("design_sprint_goal")
     expert_description = data.get("expert_description")
+    expert_id = data.get("expert_id")
     num_cycles = data.get("num_cycles", 3)
     env = data.get("env", "dev")
 
     conversation_log = operate_conversation_chain(
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
+        expert_id=expert_id,
         num_cycles=num_cycles,
         env=env,
     )

@@ -1,3 +1,5 @@
+from uuid import uuid4
+from logger import logger
 from typing import List
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
@@ -6,16 +8,22 @@ from langchain_community.llms import Ollama
 from langchain.chat_models import ChatOpenAI
 
 
+class Expert(BaseModel):
+    name: str = Field(description="Name of the expert")
+    description: str = Field(
+        description="Description of the expert in 20 words or less"
+    )
+
+
+class ExpertWithID(Expert):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+
+
+class Experts(BaseModel):
+    experts: List[Expert] = Field(description="List of experts")
+
+
 def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
-    class Expert(BaseModel):
-        name: str = Field(description="Name of the expert")
-        description: str = Field(
-            description="Description of the expert in 20 words or less"
-        )
-
-    class Experts(BaseModel):
-        experts: List[Expert] = Field(description="List of experts")
-
     output_parser = PydanticOutputParser(pydantic_object=Experts)
 
     prompt_template = """
@@ -59,15 +67,19 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     chain = prompt | model | output_parser
 
+    experts = []
+
     try:
         response = chain.invoke(
             {"sprint_goal": sprint_goal, "num_experts": num_experts}
         )
 
         for expert in response.experts:
-            print(f"Expert: {expert.name}, Description: {expert.description}")
+            expert_with_id = ExpertWithID(**expert.dict())
+            logger.info(
+                f"Expert: {expert_with_id.name}, Description: {expert_with_id.description}, ID: {expert_with_id.id}"
+            )
+            experts.append(expert_with_id)
     except Exception as e:
-        print(f"Error parsing output: {e}")
-        response = Experts(experts=[])
-
-    return response.experts
+        logger.error(f"Error parsing output: {e}")
+    return experts

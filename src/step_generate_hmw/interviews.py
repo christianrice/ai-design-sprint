@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from logger import logger
 from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -113,6 +114,7 @@ def invoke_chain_with_history(
 def operate_conversation_chain(
     design_sprint_goal: str = "Default Goal",
     expert_description: str = "Journalist highly versed in this topic",
+    expert_id: str = "1234",
     num_cycles: int = 3,
     env: str = "dev",
 ):
@@ -136,7 +138,7 @@ def operate_conversation_chain(
     )
 
     # Initialize the logs as empty arrays
-    conversation_log = []
+    conversation_log = {"expert_id": expert_id, "conversation": []}
 
     next_question = invoke_chain_with_history(
         chain=CHAIN_INTERVIEWER,
@@ -145,9 +147,11 @@ def operate_conversation_chain(
         expert_description=expert_description,
         conversation_input="What would you like to ask me?",
     )
-    conversation_log.append({"type": "question", "message": next_question})
+    conversation_log["conversation"].append(
+        {"type": "question", "message": next_question}
+    )
 
-    print(f"Question: {next_question}\n\n")
+    logger.info(f"Question: {next_question}\n\n")
 
     for i in range(num_cycles - 1):
         next_answer = invoke_chain_with_history(
@@ -158,9 +162,11 @@ def operate_conversation_chain(
             conversation_input=next_question,
         )
 
-        conversation_log.append({"type": "answer", "message": next_answer})
+        conversation_log["conversation"].append(
+            {"type": "answer", "message": next_answer}
+        )
 
-        print(f"Answer: {next_answer}\n\n")
+        logger.info(f"Answer: {next_answer}\n\n")
 
         next_question = invoke_chain_with_history(
             chain=CHAIN_INTERVIEWER,
@@ -170,9 +176,11 @@ def operate_conversation_chain(
             conversation_input=next_answer,
         )
 
-        conversation_log.append({"type": "question", "message": next_question})
+        conversation_log["conversation"].append(
+            {"type": "question", "message": next_question}
+        )
 
-        print(f"Question: {next_question}\n\n")
+        logger.info(f"Question: {next_question}\n\n")
 
     next_answer = invoke_chain_with_history(
         chain=CHAIN_EXPERT,
@@ -182,9 +190,9 @@ def operate_conversation_chain(
         conversation_input=next_question,
     )
 
-    conversation_log.append({"type": "answer", "message": next_answer})
+    conversation_log["conversation"].append({"type": "answer", "message": next_answer})
 
-    print(f"Answer: {next_answer}\n")
-    print("----------------------------------------\n\n")
+    logger.info(f"Answer: {next_answer}\n")
+    logger.info("----------------------------------------\n\n")
 
     return conversation_log
