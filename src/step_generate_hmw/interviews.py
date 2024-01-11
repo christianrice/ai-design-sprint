@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -12,8 +13,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema.output_parser import StrOutputParser
 
 
-# REDIS_URL = "redis://localhost:6379/0"
-REDIS_URL = "redis://redis:6379/0"
+REDIS_URL = os.getenv("REDIS_URL")
 
 SYSTEM_TEMPLATE_INTERVIEWER = """
 # You are a member of a Design Sprint team who is tasked with interviewing an expert. Your job is to ask insightful questions of the expert, listen to their response, and then follow up with an insightful new question every time they respond. However, you will only be able to ask a total of 5 questions throughout the whole interview, and you can only ask them one at a time. Tailor your questions to the expert's background so that you elicit as much valuable information from them as possible, and make an effort to understand their perspective so you can ask nuanced questions. Remember, this is an expert so don't waste your questions and do not ask them about industries or experiences that are out of their area of expertise.

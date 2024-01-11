@@ -22,4 +22,4 @@ ENV LANGCHAIN_API_KEY=$LANGCHAIN_API_KEY
 ENV LANGCHAIN_PROJECT=$LANGCHAIN_PROJECT
 
 # Run app.py when the container launches
-CMD ["flask", "run"]
+CMD ["flask", "run", "--debug"]

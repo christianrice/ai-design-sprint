@@ -4,6 +4,8 @@ services:
     build: .
     ports:
       - "5001:5000"
+    volumes:
+      - ./src:/usr/src/app/src
     env_file:
       - .env
   redis:
