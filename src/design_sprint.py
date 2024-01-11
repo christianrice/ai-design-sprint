@@ -74,16 +74,22 @@ def initialize_sprint():
     else:
         for expert in experts:
             print(f"Interviewing expert: {expert.name} - {expert.description}...\n")
-            answers = run_interview(
+            conversation_log = run_interview(
                 design_sprint_goal=sprint_goal,
                 expert_description=expert.description,
-                num_cycles=4,
+                num_cycles=2,
                 env="prod",
             )
 
+            answers = [
+                item["message"] for item in conversation_log if item["type"] == "answer"
+            ]
+
             print("Generating HMW questions...\n")
             for answer in answers:
-                hmw_questions = generate_hmw(answer=answer)
+                hmw_questions = generate_hmw(
+                    answer=answer, design_sprint_goal=sprint_goal
+                )
             print("HMW questions generated. -----------------\n")
 
     return

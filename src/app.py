@@ -33,21 +33,24 @@ def conduct_interview_route():
     num_cycles = data.get("num_cycles", 3)
     env = data.get("env", "dev")
 
-    answers = operate_conversation_chain(
+    conversation_log = operate_conversation_chain(
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
         num_cycles=num_cycles,
         env=env,
     )
 
-    return answers
+    return conversation_log
 
 
 @app.route("/generate_hmw_questions", methods=["POST"])
 def generate_hmw_questions_route():
     data = request.get_json()
     answer = data.get("answer")
+    design_sprint_goal = data.get("design_sprint_goal")
 
-    questions = generate_hmw_question(answer=answer)
+    questions = generate_hmw_question(
+        answer=answer, design_sprint_goal=design_sprint_goal
+    )
 
     return jsonify([question.dict() for question in questions])

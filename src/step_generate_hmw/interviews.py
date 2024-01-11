@@ -12,7 +12,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema.output_parser import StrOutputParser
 
 
-REDIS_URL = "redis://localhost:6379/0"
+# REDIS_URL = "redis://localhost:6379/0"
+REDIS_URL = "redis://redis:6379/0"
 
 SYSTEM_TEMPLATE_INTERVIEWER = """
 # You are a member of a Design Sprint team who is tasked with interviewing an expert. Your job is to ask insightful questions of the expert, listen to their response, and then follow up with an insightful new question every time they respond. However, you will only be able to ask a total of 5 questions throughout the whole interview, and you can only ask them one at a time. Tailor your questions to the expert's background so that you elicit as much valuable information from them as possible, and make an effort to understand their perspective so you can ask nuanced questions. Remember, this is an expert so don't waste your questions and do not ask them about industries or experiences that are out of their area of expertise.
@@ -134,8 +135,8 @@ def operate_conversation_chain(
         system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_EXPERT, env=env
     )
 
-    # Initialize the log as an empty list
-    answer_log = []
+    # Initialize the logs as empty arrays
+    conversation_log = []
 
     next_question = invoke_chain_with_history(
         chain=CHAIN_INTERVIEWER,
@@ -144,6 +145,7 @@ def operate_conversation_chain(
         expert_description=expert_description,
         conversation_input="What would you like to ask me?",
     )
+    conversation_log.append({"type": "question", "message": next_question})
 
     print(f"Question: {next_question}\n\n")
 
@@ -156,7 +158,7 @@ def operate_conversation_chain(
             conversation_input=next_question,
         )
 
-        answer_log.append(next_answer)
+        conversation_log.append({"type": "answer", "message": next_answer})
 
         print(f"Answer: {next_answer}\n\n")
 
@@ -168,6 +170,8 @@ def operate_conversation_chain(
             conversation_input=next_answer,
         )
 
+        conversation_log.append({"type": "question", "message": next_question})
+
         print(f"Question: {next_question}\n\n")
 
     next_answer = invoke_chain_with_history(
@@ -178,9 +182,9 @@ def operate_conversation_chain(
         conversation_input=next_question,
     )
 
-    answer_log.append(next_answer)
+    conversation_log.append({"type": "answer", "message": next_answer})
 
     print(f"Answer: {next_answer}\n")
     print("----------------------------------------\n\n")
 
-    return answer_log
+    return conversation_log

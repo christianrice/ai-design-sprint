@@ -6,3 +6,7 @@ services:
       - "5001:5000"
     env_file:
       - .env
+  redis:
+    image: redis
+    ports:
+      - "6380:6379"
