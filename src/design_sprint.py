@@ -30,14 +30,14 @@ def generate_hmw(answer: str):
 def run_interview(
     design_sprint_goal: str, expert_description: str, num_cycles: int, env: str
 ):
-    answers = operate_conversation_chain(
+    interview = operate_conversation_chain(
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
         num_cycles=num_cycles,
         env=env,
     )
 
-    return answers
+    return interview.conversation
 
 
 def initialize_sprint():
@@ -74,16 +74,16 @@ def initialize_sprint():
     else:
         for expert in experts:
             print(f"Interviewing expert: {expert.name} - {expert.description}...\n")
-            conversation_log = run_interview(
+            interview_log = run_interview(
                 design_sprint_goal=sprint_goal,
                 expert_description=expert.description,
                 num_cycles=2,
                 env="prod",
             )
 
-            answers = [
-                item["message"] for item in conversation_log if item["type"] == "answer"
-            ]
+            print(interview_log)
+
+            answers = [item.message for item in interview_log if item.type == "answer"]
 
             print("Generating HMW questions...\n")
             for answer in answers:

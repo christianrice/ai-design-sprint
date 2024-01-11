@@ -28,10 +28,11 @@ class Interview:
     conversation: List[Message]
 
 
+# REDIS_URL = "redis://localhost:6379/0"
 REDIS_URL = os.getenv("REDIS_URL")
 
 SYSTEM_TEMPLATE_INTERVIEWER = """
-# You are a member of a Design Sprint team who is tasked with interviewing an expert. Your job is to ask insightful questions of the expert, listen to their response, and then follow up with an insightful new question every time they respond. However, you will only be able to ask a total of 5 questions throughout the whole interview, and you can only ask them one at a time. Tailor your questions to the expert's background so that you elicit as much valuable information from them as possible, and make an effort to understand their perspective so you can ask nuanced questions. Remember, this is an expert so don't waste your questions and do not ask them about industries or experiences that are out of their area of expertise.
+You are a member of a Design Sprint team who is tasked with interviewing an expert. Your job is to ask insightful questions of the expert, listen to their response, and then follow up with an insightful new question every time they respond. However, you will only be able to ask a total of {num_cycles} questions throughout the whole interview, and you can only ask them one at a time. Tailor your questions to the expert's background so that you elicit as much valuable information from them as possible, and make an effort to understand their perspective so you can ask nuanced questions. Remember, this is an expert so don't waste your questions and do not ask them about industries or experiences that are out of their area of expertise.
 
 Here is the goal of this design sprint, delimited below by triple backticks. You want to get information from the expert regarding this topic:
 
@@ -70,9 +71,7 @@ HUMAN_TEMPLATE = "{conversation_input}"
 
 
 # Initialize the interviewer chain
-def initialize_interviewer_chain(
-    system_template: str, session_id: str, env: str = "dev"
-):
+def initialize_interviewer_chain(system_template: str, session_id: str):
     prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(system_template),
@@ -81,16 +80,12 @@ def initialize_interviewer_chain(
         ]
     )
 
-    if env == "prod":
-        model = ChatOpenAI(model="gpt-3.5-turbo-1106")
-        # model = ChatOpenAI(model="gpt-4-1106-preview")
-        output_parser = StrOutputParser()
+    model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    # model = ChatOpenAI(model="gpt-4-1106-preview")
 
-        chain = prompt | model | output_parser
-    else:
-        model = Ollama(model="mistral")
+    output_parser = StrOutputParser()
 
-        chain = prompt | model
+    chain = prompt | model | output_parser
 
     history = RedisChatMessageHistory(session_id=session_id, url=REDIS_URL, ttl=600)
 
@@ -108,15 +103,17 @@ def initialize_interviewer_chain(
 def invoke_chain_with_history(
     chain: RunnableWithMessageHistory,
     session_id: str,
-    design_sprint_goal: str = "Fallback sprint goal",
-    expert_description: str = "Fallback expert bio",
-    conversation_input: str = "Fallback conversation input",
+    design_sprint_goal: str,
+    expert_description: str,
+    num_cycles: str,
+    conversation_input: str,
 ):
     response = chain.invoke(
         {
             "design_sprint_goal": design_sprint_goal,
             "expert_description": expert_description,
             "conversation_input": conversation_input,
+            "num_cycles": num_cycles,
         },
         config={"configurable": {"session_id": session_id}},
     )
@@ -126,11 +123,10 @@ def invoke_chain_with_history(
 
 # Function the operates the conversation chain
 def operate_conversation_chain(
-    design_sprint_goal: str = "Default Goal",
-    expert_description: str = "Journalist highly versed in this topic",
-    expert_id: str = "1234",
+    design_sprint_goal: str,
+    expert_description: str,
+    expert_id: str,
     num_cycles: int = 3,
-    env: str = "dev",
 ):
     # Get the current date and time
     now = datetime.now()
@@ -142,13 +138,11 @@ def operate_conversation_chain(
     SESSION_EXPERT = "session_expert_" + timestamp
 
     CHAIN_INTERVIEWER = initialize_interviewer_chain(
-        system_template=SYSTEM_TEMPLATE_INTERVIEWER,
-        session_id=SESSION_INTERVIEWER,
-        env=env,
+        system_template=SYSTEM_TEMPLATE_INTERVIEWER, session_id=SESSION_INTERVIEWER
     )
 
     CHAIN_EXPERT = initialize_interviewer_chain(
-        system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_EXPERT, env=env
+        system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_EXPERT
     )
 
     # Initialize the logs as empty arrays
@@ -159,6 +153,7 @@ def operate_conversation_chain(
         session_id=SESSION_INTERVIEWER,
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
+        num_cycles=num_cycles,
         conversation_input="What would you like to ask me?",
     )
     interview_log.conversation.append(Message(type="question", message=next_question))
@@ -171,6 +166,7 @@ def operate_conversation_chain(
             session_id=SESSION_EXPERT,
             design_sprint_goal=design_sprint_goal,
             expert_description=expert_description,
+            num_cycles=num_cycles,
             conversation_input=next_question,
         )
 
@@ -183,6 +179,7 @@ def operate_conversation_chain(
             session_id=SESSION_INTERVIEWER,
             design_sprint_goal=design_sprint_goal,
             expert_description=expert_description,
+            num_cycles=num_cycles,
             conversation_input=next_answer,
         )
 
@@ -197,6 +194,7 @@ def operate_conversation_chain(
         session_id=SESSION_EXPERT,
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
+        num_cycles=num_cycles,
         conversation_input=next_question,
     )
 
@@ -205,6 +203,4 @@ def operate_conversation_chain(
     logger.info(f"Answer: {next_answer}\n")
     logger.info("----------------------------------------\n\n")
 
-    logger.info(interview_log)
-
-    return asdict(interview_log)
+    return interview_log

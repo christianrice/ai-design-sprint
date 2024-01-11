@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, jsonify
+from dataclasses import asdict
 from step_generate_hmw.experts import generate_experts
 from step_generate_hmw.interviews import operate_conversation_chain
 from step_generate_hmw.analysis import generate_hmw_question
@@ -32,17 +33,15 @@ def conduct_interview_route():
     expert_description = data.get("expert_description")
     expert_id = data.get("expert_id")
     num_cycles = data.get("num_cycles", 3)
-    env = data.get("env", "dev")
 
     conversation_log = operate_conversation_chain(
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
         expert_id=expert_id,
         num_cycles=num_cycles,
-        env=env,
     )
 
-    return jsonify(conversation_log)
+    return jsonify(asdict(conversation_log))
 
 
 @app.route("/generate_hmw_questions", methods=["POST"])

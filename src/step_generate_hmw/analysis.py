@@ -19,26 +19,30 @@ def generate_hmw_question(answer: str, design_sprint_goal: str):
 
     ```{design_sprint_goal}```
 
-    You represent experts in marketing, technology, and design.
+    You represent experts in product management, technology, and design.
 
-    Your job is to observe an interview and take notes about interesting insights you observe from the interviewee. When you observe something interesting, convert it into a question that follows the "How might we..." format, and use shorthand HMW to denote it.
+    Your job is to observe an interview and take notes about interesting insights you observe from the interviewee. When you observe something interesting that actually could generate a unique, specific insight, convert it into a question that follows the "How might we..." format, and use shorthand HMW to denote it.
 
-    For every answer you review from an interview, generate 2 HMW questions from each of the perspectives: marketing, technology, and design. That should be 6 questions total.
+    For every answer you review from an interview, generate 1 HMW question from each of the perspectives: product, technology, and design. That should be 3 questions total.
 
     For example, if the interview answer was around buying online coffee, you might generate:
 
     ```
     Marketing: HMW help people realize they can order coffee online?
-    Tech: HMW make the web experience a delight?
-    Design: HMW make them feel like a regular on the site?
+    Tech: HMW remember the user's favorite orders to make ordering simple?
+    Design: HMW make the user feel like a regular on the site?
     ```
+
+    DO NOT EVER include generic questions like "HMW ensure the web app provides a seamless user experience?", that is a terrible HMW question that provides no valuable insight. Your questions must be more specific to the interviewee's answer and provide new insight. You will severely disappoint the expert if you provide uninsightful HMW questions.
 
     Adhere to the following format for your response:
     {format_instructions}
     """
 
     class HMWQuestion(BaseModel):
-        question: str = Field(description="A HMW question up to 10 words")
+        question: str = Field(
+            description="A HMW question up to 10 words. This should always be in the format: HMW <question>?"
+        )
         role: str = Field(
             description="Role of the person asking the question, either marketing, technology, or design"
         )
@@ -65,7 +69,6 @@ def generate_hmw_question(answer: str, design_sprint_goal: str):
         model="gpt-3.5-turbo-1106",
         model_kwargs={"response_format": {"type": "json_object"}},
     )
-    # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     chain = prompt | model | parser
 

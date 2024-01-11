@@ -56,18 +56,16 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     prompt = PromptTemplate(
         template=prompt_template,
-        input_variables=["field_of_expertise"],
+        input_variables=["spring_goal", "num_experts"],
         partial_variables={
             "format_instructions": output_parser.get_format_instructions()
         },
     )
 
-    # model = Ollama(model="mistral")
     model = ChatOpenAI(
         model="gpt-3.5-turbo-1106",
         model_kwargs={"response_format": {"type": "json_object"}},
     )
-    # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     chain = prompt | model | output_parser
 
@@ -80,14 +78,10 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
         for expert in response.experts:
             expert_with_id = ExpertWithID(**expert.dict())
-            logger.info(
-                f"Expert: {expert_with_id.name}, Description: {expert_with_id.description}, ID: {expert_with_id.id}"
-            )
             print(
                 f"Expert: {expert_with_id.name}, Description: {expert_with_id.description}"
             )
             experts_with_id.experts.append(expert_with_id)
-            logger.info(f"Experts: {experts_with_id}")
     except Exception as e:
         logger.error(f"Error parsing output: {e}")
     return experts_with_id.experts
