@@ -16,6 +16,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema.output_parser import StrOutputParser
 
 
+# Define the data classes and templates for storing interview history.
 @dataclass
 class Message:
     type: str
@@ -28,9 +29,9 @@ class Interview:
     conversation: List[Message]
 
 
-# REDIS_URL = "redis://localhost:6379/0"
 REDIS_URL = os.getenv("REDIS_URL")
 
+# Define the message templates for the interviewer and expert
 SYSTEM_TEMPLATE_INTERVIEWER = """
 You are a member of a Design Sprint team who is tasked with interviewing an expert. Your job is to ask insightful questions of the expert, listen to their response, and then follow up with an insightful new question every time they respond. However, you will only be able to ask a total of {num_cycles} questions throughout the whole interview, and you can only ask them one at a time. Tailor your questions to the expert's background so that you elicit as much valuable information from them as possible, and make an effort to understand their perspective so you can ask nuanced questions. Remember, this is an expert so don't waste your questions and do not ask them about industries or experiences that are out of their area of expertise.
 
@@ -62,7 +63,9 @@ You are being interviewed by a company who is exploring how to solve a problem a
 {design_sprint_goal}
 ```
 
-Given this context, answer the questions they ask of you. Your answers should come from your own deep, personal experience. Do not embellish or answer in ways that try to impress the interviewer. You should share your personal feelings according to your background, and you should not worry about pleasing the interviewer if your answers do not align with their problem solving mission. They are simply seeking honesty from you. Do not talk about industries outside your area of expertise, always come back to your persona to answer a question. Furthermore, don't waste time repeating their question. Just get right into answering it succinctly and clearly, with no wasted words.
+Given this context, answer the questions they ask of you. Your answers should come from your own deep, personal experience. Do not embellish or answer in ways that try to impress the interviewer. You should share your personal feelings according to your background, and you should not worry about pleasing the interviewer if your answers do not align with their problem solving mission. They are simply seeking honesty from you. Do not talk about industries outside your area of expertise, always come back to your persona to answer a question.
+
+Don't waste words repeating the question. Just get right into answering it succinctly and clearly, with no wasted words or throat clearing.
 
 Your answer should be about 150 words, and you should be detailed but concise.
 """
@@ -70,7 +73,7 @@ Your answer should be about 150 words, and you should be detailed but concise.
 HUMAN_TEMPLATE = "{conversation_input}"
 
 
-# Initialize the interviewer chain
+# Initialize the interviewer chain with a running conversation history
 def initialize_interviewer_chain(system_template: str, session_id: str):
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -81,7 +84,6 @@ def initialize_interviewer_chain(system_template: str, session_id: str):
     )
 
     model = ChatOpenAI(model="gpt-3.5-turbo-1106")
-    # model = ChatOpenAI(model="gpt-4-1106-preview")
 
     output_parser = StrOutputParser()
 
@@ -121,66 +123,71 @@ def invoke_chain_with_history(
     return response
 
 
-# Function the operates the conversation chain
+# Initiate and run the full conversation chain
 def operate_conversation_chain(
     design_sprint_goal: str,
     expert_description: str,
     expert_id: str,
     num_cycles: int = 3,
 ):
-    # Get the current date and time
+    # Create unique session tags to manage conversation history in Redis
     now = datetime.now()
-
-    # Format it as a string
     timestamp = now.strftime("%Y%m%d%H%M%S%f")[:17]
+    SESSION_ID_INTERVIEWER = "session_id_interviewer_" + timestamp
+    SESSION_ID_EXPERT = "session_id_expert_" + timestamp
 
-    SESSION_INTERVIEWER = "session_interviewer_" + timestamp
-    SESSION_EXPERT = "session_expert_" + timestamp
-
+    # Initialize the conversation chains
     CHAIN_INTERVIEWER = initialize_interviewer_chain(
-        system_template=SYSTEM_TEMPLATE_INTERVIEWER, session_id=SESSION_INTERVIEWER
+        system_template=SYSTEM_TEMPLATE_INTERVIEWER, session_id=SESSION_ID_INTERVIEWER
     )
 
     CHAIN_EXPERT = initialize_interviewer_chain(
-        system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_EXPERT
+        system_template=SYSTEM_TEMPLATE_EXPERT, session_id=SESSION_ID_EXPERT
     )
 
-    # Initialize the logs as empty arrays
+    # Initialize the interview log to record the interview in our desired structure
     interview_log = Interview(expert_id=expert_id, conversation=[])
 
+    # Kick off the interview with a human prompt to generate the first question
     next_question = invoke_chain_with_history(
         chain=CHAIN_INTERVIEWER,
-        session_id=SESSION_INTERVIEWER,
+        session_id=SESSION_ID_INTERVIEWER,
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
         num_cycles=num_cycles,
         conversation_input="What would you like to ask me?",
     )
+
+    # Add the first question to the interview log
     interview_log.conversation.append(Message(type="question", message=next_question))
 
     logger.info(f"Question: {next_question}\n\n")
 
+    # Iterate through the conversation chain for the number of cycles specified
+    # (excluding one cycle to account for the first and last message)
     for i in range(num_cycles - 1):
-        next_answer = invoke_chain_with_history(
+        # Generate an answer from the expert and append it to the interview
+        answer = invoke_chain_with_history(
             chain=CHAIN_EXPERT,
-            session_id=SESSION_EXPERT,
+            session_id=SESSION_ID_EXPERT,
             design_sprint_goal=design_sprint_goal,
             expert_description=expert_description,
             num_cycles=num_cycles,
             conversation_input=next_question,
         )
 
-        interview_log.conversation.append(Message(type="answer", message=next_answer))
+        interview_log.conversation.append(Message(type="answer", message=answer))
 
-        logger.info(f"Answer: {next_answer}\n\n")
+        logger.info(f"Answer: {answer}\n\n")
 
+        # Generate the next question for the expert and append it to the interview log
         next_question = invoke_chain_with_history(
             chain=CHAIN_INTERVIEWER,
-            session_id=SESSION_INTERVIEWER,
+            session_id=SESSION_ID_INTERVIEWER,
             design_sprint_goal=design_sprint_goal,
             expert_description=expert_description,
             num_cycles=num_cycles,
-            conversation_input=next_answer,
+            conversation_input=answer,
         )
 
         interview_log.conversation.append(
@@ -189,18 +196,20 @@ def operate_conversation_chain(
 
         logger.info(f"Question: {next_question}\n\n")
 
-    next_answer = invoke_chain_with_history(
+    # Generate the final answer from the expert and append it to the interview log
+    final_answer = invoke_chain_with_history(
         chain=CHAIN_EXPERT,
-        session_id=SESSION_EXPERT,
+        session_id=SESSION_ID_EXPERT,
         design_sprint_goal=design_sprint_goal,
         expert_description=expert_description,
         num_cycles=num_cycles,
         conversation_input=next_question,
     )
 
-    interview_log.conversation.append(Message(type="answer", message=next_answer))
+    interview_log.conversation.append(Message(type="answer", message=final_answer))
 
-    logger.info(f"Answer: {next_answer}\n")
+    logger.info(f"Answer: {final_answer}\n")
     logger.info("----------------------------------------\n\n")
 
+    # Return the full interview log
     return interview_log

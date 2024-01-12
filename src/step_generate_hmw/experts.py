@@ -56,7 +56,7 @@ def generate_experts(sprint_goal: str = "Default goal", num_experts: int = 1):
 
     prompt = PromptTemplate(
         template=prompt_template,
-        input_variables=["spring_goal", "num_experts"],
+        input_variables=["sprint_goal", "num_experts"],
         partial_variables={
             "format_instructions": output_parser.get_format_instructions()
         },
